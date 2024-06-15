@@ -3,11 +3,19 @@ import walletsArray from './wallets.js';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
+import { Telegraf } from 'telegraf';
+import dotenv from 'dotenv';
+dotenv.config();
 const walletsSet = new Set(walletsArray);
 async function encontrarBitcoins(key, min, max, shouldStop) {
     let segundos = 0;
     const startTime = Date.now();
-
+    const telegramToken = process.env.TELEGRAM_TOKEN;
+    if (!telegramToken) {
+        console.log('Erro: o token do Telegram deve ser informado');
+        return;
+    }
+    const bot = new Telegraf(telegramToken);
     const zeroes = Array.from({ length: 65 }, (_, i) => '0'.repeat(64 - i));
 
     console.log('Buscando Bitcoins...');
@@ -51,12 +59,12 @@ async function encontrarBitcoins(key, min, max, shouldStop) {
                 const lineToAppend = `Private key: ${pkey}, WIF: ${generateWIF(pkey)}\n`;
 
                 try {
+                    bot.telegram.sendMessage(process.env.TELEGRAM_CHAT_ID, lineToAppend);
                     fs.appendFileSync(filePath, lineToAppend);
                     console.log('Chave escrita no arquivo com sucesso.');
                 } catch (err) {
                     console.error('Erro ao escrever chave em arquivo:', err);
                 }
-
                 console.log('ACHEI!!!! 🎉🎉🎉🎉🎉');
                 return; // Parar a busca
             }
